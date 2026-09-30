@@ -87,16 +87,21 @@ async fn upload_handler(State(dir): State<String>, mut multipart: Multipart) -> 
 pub async fn open_server(port: u16, dir: String) -> Result<(), Box<dyn std::error::Error>> {
     tokio::fs::create_dir_all(&dir).await?;
 
-    let ip_v6 = local_ipv6()?;
     let ip_v4 = local_ip()?;
 
-    let url_v6 = format!("http://[{}]:{port}", ip_v6);
+    // IPv6 仅用于生成二维码；无全局 IPv6 时跳过，不影响服务启动
+    if let Ok(ip_v6) = local_ipv6() {
+        let url_v6 = format!("http://[{}]:{port}", ip_v6);
 
-    let code = TermQrCode::from_bytes(url_v6.as_bytes());
+        let code = TermQrCode::from_bytes(url_v6.as_bytes());
 
-    println!("服务已启动：\n{}\nhttp://{}:{port}", &url_v6, ip_v4);
-    println!("二维码为ipv6地址");
-    code.print();
+        println!("服务已启动：\n{}\nhttp://{}:{port}", &url_v6, ip_v4);
+        println!("二维码为ipv6地址");
+        code.print();
+    } else {
+        println!("服务已启动：\nhttp://{}:{port}", ip_v4);
+        println!("未获取到可用的 IPv6 地址，已跳过二维码");
+    }
     println!("按 Ctrl+C 停止");
     
     let app = Router::new()

@@ -49,222 +49,345 @@ pub async fn page_handler(State(dir): State<String>) -> Markup {
 
     html! {
         (maud::DOCTYPE)
-        html {
+        html lang="zh-CN" {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1.0";
+                link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23181818'/%3E%3Crect x='3' y='3' width='10' height='10' fill='%23ffdd33'/%3E%3C/svg%3E";
                 title { "ShareFiles" }
                 style {
                     (maud::PreEscaped(r#"
+                        :root {
+                            /* Gruber Darker palette */
+                            --bg: #181818;
+                            --bg-1: #101010;
+                            --bg-hl: #282828;
+                            --region: #453d41;
+                            --fg: #e4e4ef;
+                            --fg-bright: #f4f4ff;
+                            --yellow: #ffdd33;
+                            --orange: #cc8c3c;
+                            --green: #73c936;
+                            --red: #f43841;
+                            --niagara: #96a6c8;
+                            --quartz: #95a99f;
+                        }
                         * { margin: 0; padding: 0; box-sizing: border-box; }
+                        html { color-scheme: dark; }
+                        ::selection { background: var(--region); color: var(--fg-bright); }
                         body {
-                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+                            font-family: ui-monospace, "JetBrains Mono", "Fira Code", "Cascadia Mono", "Iosevka", Menlo, Consolas, "Liberation Mono", monospace;
+                            background: var(--bg);
+                            color: var(--fg);
+                            font-size: 14px;
+                            line-height: 1.5;
                             min-height: 100vh;
-                            padding: 40px 20px;
-                            color: #c0c0d0;
+                            padding: 48px 20px 24px;
+                            display: flex;
+                            flex-direction: column;
                         }
                         .container {
-                            max-width: 680px;
+                            max-width: 720px;
+                            width: 100%;
                             margin: 0 auto;
-                        }
-                        .card {
-                            background: #1e1e2e;
-                            border-radius: 16px;
-                            box-shadow: 0 20px 60px rgba(0,0,0,.4);
-                            padding: 40px;
-                            margin-bottom: 24px;
-                        }
-                        h1 {
-                            font-size: 28px;
-                            font-weight: 700;
-                            color: #e0e0f0;
-                            margin-bottom: 4px;
-                        }
-                        .subtitle {
-                            color: #6c6c8a;
-                            font-size: 14px;
-                            margin-bottom: 28px;
-                        }
-                        .file-list {
-                            list-style: none;
-                        }
-                        .file-item {
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            padding: 14px 16px;
-                            border-radius: 10px;
-                            transition: background .15s;
-                            text-decoration: none;
-                            color: inherit;
-                            gap: 12px;
-                        }
-                        .file-item:hover {
-                            background: #2a2a40;
-                        }
-                        .file-item + .file-item {
-                            margin-top: 4px;
-                        }
-                        .file-icon {
-                            font-size: 20px;
-                            flex-shrink: 0;
-                        }
-                        .file-info {
                             flex: 1;
-                            min-width: 0;
+                            display: flex;
+                            flex-direction: column;
                         }
-                        .file-name {
-                            font-weight: 500;
-                            font-size: 15px;
-                            color: #e0e0f0;
+                        .masthead { margin-bottom: 28px; }
+                        h1 {
+                            font-size: 26px;
+                            font-weight: 700;
+                            color: var(--yellow);
+                            letter-spacing: -0.02em;
+                        }
+                        .cursor {
+                            display: inline-block;
+                            width: 0.6em;
+                            height: 1em;
+                            margin-left: 2px;
+                            background: var(--yellow);
+                            vertical-align: -0.12em;
+                            animation: blink 1.1s steps(1) infinite;
+                        }
+                        @keyframes blink { 50% { opacity: 0; } }
+                        .subtitle { color: var(--orange); font-size: 13px; margin-top: 4px; }
+                        .panel {
+                            background: var(--bg-1);
+                            border: 1px solid var(--bg-hl);
+                            padding: 20px;
+                            margin-bottom: 20px;
+                        }
+                        .panel-title {
+                            color: var(--orange);
+                            font-size: 12px;
+                            margin-bottom: 14px;
+                            user-select: none;
+                        }
+                        .file-list { list-style: none; }
+                        .file-item {
+                            display: grid;
+                            grid-template-columns: minmax(0, 1fr) auto auto;
+                            gap: 4px 20px;
+                            align-items: baseline;
+                            padding: 7px 10px;
+                            text-decoration: none;
+                            border-left: 2px solid transparent;
+                            transition: background 0.12s ease, border-color 0.12s ease;
+                        }
+                        .file-item:hover { background: var(--bg-hl); border-left-color: var(--yellow); }
+                        .file-name { color: var(--niagara); word-break: break-all; }
+                        .file-item:hover .file-name { color: var(--fg-bright); text-decoration: underline; }
+                        .file-time { color: var(--quartz); font-size: 12px; white-space: nowrap; }
+                        .file-size {
+                            color: var(--green);
+                            font-size: 12px;
+                            white-space: nowrap;
+                            text-align: right;
+                            min-width: 70px;
+                        }
+                        .empty-state { color: var(--orange); padding: 18px 10px; }
+                        #dropzone {
+                            border: 1px dashed var(--region);
+                            padding: 26px 16px;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: border-color 0.15s ease, background 0.15s ease;
+                            user-select: none;
+                        }
+                        #dropzone:hover, #dropzone.dragover {
+                            border-color: var(--yellow);
+                            background: rgba(255, 221, 51, 0.05);
+                        }
+                        #dropzone .arrow {
+                            display: block;
+                            color: var(--yellow);
+                            font-size: 20px;
+                            margin-bottom: 6px;
+                        }
+                        #dropzone .hint { color: var(--quartz); font-size: 13px; }
+                        #selected {
+                            display: none;
+                            color: var(--fg-bright);
+                            font-size: 12px;
+                            margin-top: 10px;
                             word-break: break-all;
                         }
-                        .file-meta {
-                            font-size: 12px;
-                            color: #6c6c8a;
-                            margin-top: 2px;
-                        }
-                        .file-size {
-                            font-size: 13px;
-                            color: #8c8caa;
-                            white-space: nowrap;
-                            flex-shrink: 0;
-                        }
-                        .empty-state {
-                            text-align: center;
-                            padding: 40px 0;
-                            color: #6c6c8a;
-                        }
-                        .empty-state .icon {
-                            font-size: 48px;
-                            margin-bottom: 12px;
-                        }
-                        .empty-state p {
-                            font-size: 15px;
-                        }
-                        h2 {
-                            font-size: 18px;
-                            font-weight: 600;
-                            color: #e0e0f0;
-                            margin-bottom: 16px;
-                        }
-                        .upload-area {
-                            border: 2px dashed #3d3d5c;
-                            border-radius: 12px;
-                            padding: 32px;
-                            text-align: center;
-                            transition: border-color .2s, background .2s;
-                            cursor: pointer;
-                        }
-                        .upload-area:hover {
-                            border-color: #7c6ff0;
-                            background: #232338;
-                        }
-                        .upload-area .icon {
-                            font-size: 36px;
-                            margin-bottom: 8px;
-                        }
-                        .upload-area p {
-                            color: #6c6c8a;
-                            font-size: 14px;
-                            margin-bottom: 16px;
-                        }
-                        .upload-area input[type="file"] {
-                            display: block;
-                            margin: 0 auto 12px;
-                            font-size: 14px;
-                            color: #aaa;
-                        }
-                        .upload-area input[type="file"]::file-selector-button {
-                            background: #7c6ff0;
-                            color: #fff;
+                        #file-input { display: block; margin: 14px auto 0; color: var(--quartz); font-size: 13px; }
+                        #file-input::file-selector-button {
+                            background: var(--yellow);
+                            color: var(--bg);
                             border: none;
-                            border-radius: 8px;
-                            padding: 8px 20px;
-                            font-size: 14px;
+                            padding: 7px 18px;
+                            font: inherit;
+                            font-weight: 700;
                             cursor: pointer;
                             margin-right: 12px;
-                            transition: background .15s;
                         }
-                        .upload-area input[type="file"]::file-selector-button:hover {
-                            background: #6b5de0;
+                        #file-input::file-selector-button:hover { background: var(--fg-bright); }
+                        .controls {
+                            display: flex;
+                            align-items: center;
+                            gap: 14px;
+                            margin-top: 16px;
+                            flex-wrap: wrap;
                         }
-                        .btn-upload {
-                            background: #7c6ff0;
-                            color: #fff;
+                        #btn-upload {
+                            background: var(--yellow);
+                            color: var(--bg);
                             border: none;
-                            border-radius: 8px;
-                            padding: 10px 32px;
-                            font-size: 15px;
-                            font-weight: 500;
+                            padding: 8px 26px;
+                            font: inherit;
+                            font-weight: 700;
                             cursor: pointer;
-                            transition: background .15s, transform .1s;
+                            transition: background 0.12s ease;
                         }
-                        .btn-upload:hover {
-                            background: #6b5de0;
+                        #btn-upload:hover:not(:disabled) { background: var(--fg-bright); }
+                        #btn-upload:disabled { opacity: 0.35; cursor: default; }
+                        #progress {
+                            display: none;
+                            flex: 1;
+                            min-width: 110px;
+                            height: 5px;
+                            background: var(--bg-hl);
                         }
-                        .btn-upload:active {
-                            transform: scale(.97);
+                        #progress-fill {
+                            height: 100%;
+                            width: 0;
+                            background: var(--yellow);
+                            transition: width 0.1s linear;
                         }
-                        .footer {
-                            text-align: center;
-                            color: rgba(255,255,255,.3);
-                            font-size: 13px;
-                            margin-top: 24px;
+                        .status { display: none; width: 100%; font-size: 13px; }
+                        .status.ok { display: block; color: var(--green); }
+                        .status.err { display: block; color: var(--red); }
+                        .status.info { display: block; color: var(--quartz); }
+                        .mode-line {
+                            margin-top: auto;
+                            background: var(--bg-1);
+                            border: 1px solid var(--bg-hl);
+                            padding: 9px 14px;
+                            display: flex;
+                            justify-content: space-between;
+                            gap: 12px;
+                            font-size: 12px;
                         }
-                        @media (max-width: 480px) {
-                            body { padding: 16px 12px; }
-                            .card { padding: 24px 16px; }
+                        .mode-line .brand { color: var(--yellow); font-weight: 700; }
+                        .mode-line .desc { color: var(--quartz); }
+                        :focus-visible { outline: 1px solid var(--yellow); outline-offset: 2px; }
+                        @media (max-width: 560px) {
+                            body { padding: 24px 12px 16px; }
                             h1 { font-size: 22px; }
-                            .file-item { flex-wrap: wrap; }
+                            .file-item { grid-template-columns: minmax(0, 1fr) auto; }
+                            .file-time { display: none; }
                         }
                     "#))
                 }
             }
             body {
                 .container {
-                    .card {
-                        h1 { "ShareFiles" }
-                        p.subtitle { "上传文件并分享给局域网中的其他设备" }
+                    header.masthead {
+                        h1 { "ShareFiles" span.cursor {} }
+                        p.subtitle { ";; 上传文件并分享给局域网中的其他设备" }
                     }
 
-                    .card {
-                        h2 { "📁 文件列表" }
+                    .panel {
+                        .panel-title { ";; 文件列表" }
                         @if has_files {
-                            .file-list {
+                            ul.file-list {
                                 @for (name, size, time) in &files {
-                                    a.file-item href={ "/download/"(name) } {
-                                        span.file-icon { "📄" }
-                                        .file-info {
-                                            .file-name { (name) }
-                                            .file-meta { (time) }
+                                    li {
+                                        a.file-item href={ "/download/"(name) } {
+                                            span.file-name { (name) }
+                                            span.file-time { (time) }
+                                            span.file-size { (size) }
                                         }
-                                        span.file-size { (size) }
                                     }
                                 }
                             }
                         } @else {
-                            .empty-state {
-                                .icon { "📂" }
-                                p { "暂无文件" }
+                            .empty-state { ";; 暂无文件，拖一个上来吧" }
+                        }
+                    }
+
+                    .panel {
+                        .panel-title { ";; 上传文件" }
+                        form id="upload-form" action="/upload" method="post" enctype="multipart/form-data" {
+                            #dropzone {
+                                span.arrow { "↑" }
+                                p.hint { "拖拽文件到此处，或点击选择（支持多选）" }
+                                #selected {}
+                            }
+                            input id="file-input" type="file" name="file" multiple;
+                            .controls {
+                                button.btn-upload id="btn-upload" type="submit" { "上传" }
+                                #progress { #progress-fill {} }
+                                .status {}
                             }
                         }
                     }
 
-                    .card {
-                        h2 { "⬆️ 上传文件" }
-                        form action="/upload" method="post" enctype="multipart/form-data" {
-                            .upload-area {
-                                .icon { "☁️" }
-                                p { "点击选择或拖拽文件到此处" }
-                                input type="file" name="file";
-                                button.btn-upload { "上传" }
-                            }
-                        }
+                    footer.mode-line {
+                        span.brand { "ShareFiles" }
+                        span.desc { "局域网文件分享" }
                     }
+                }
 
-                    .footer { "ShareFiles — 局域网文件分享" }
+                script {
+                    (maud::PreEscaped(r#"
+                        (function () {
+                            var dz = document.getElementById('dropzone');
+                            var input = document.getElementById('file-input');
+                            var selected = document.getElementById('selected');
+                            var form = document.getElementById('upload-form');
+                            var btn = document.getElementById('btn-upload');
+                            var progress = document.getElementById('progress');
+                            var fill = document.getElementById('progress-fill');
+                            var status = document.querySelector('.status');
+
+                            input.style.display = 'none';
+
+                            function fmt(n) {
+                                var u = ['B', 'KB', 'MB', 'GB'], i = 0;
+                                while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+                                return n.toFixed(1) + ' ' + u[i];
+                            }
+                            function showSelected() {
+                                var fs = input.files;
+                                if (!fs || fs.length === 0) {
+                                    selected.style.display = 'none';
+                                    selected.textContent = '';
+                                    return;
+                                }
+                                var total = 0, names = [];
+                                for (var i = 0; i < fs.length; i++) {
+                                    total += fs[i].size;
+                                    names.push(fs[i].name);
+                                }
+                                selected.textContent = ';; 已选择 ' + fs.length + ' 个文件（共 ' + fmt(total) + '）：' + names.join('、');
+                                selected.style.display = 'block';
+                            }
+                            function setStatus(text, kind) {
+                                status.textContent = text;
+                                status.className = 'status' + (kind ? ' ' + kind : '');
+                            }
+
+                            dz.addEventListener('click', function () { input.click(); });
+                            input.addEventListener('change', showSelected);
+                            ['dragenter', 'dragover'].forEach(function (ev) {
+                                dz.addEventListener(ev, function (e) {
+                                    e.preventDefault();
+                                    dz.classList.add('dragover');
+                                });
+                            });
+                            ['dragleave', 'drop'].forEach(function (ev) {
+                                dz.addEventListener(ev, function (e) {
+                                    e.preventDefault();
+                                    dz.classList.remove('dragover');
+                                });
+                            });
+                            dz.addEventListener('drop', function (e) {
+                                if (e.dataTransfer && e.dataTransfer.files.length) {
+                                    input.files = e.dataTransfer.files;
+                                    showSelected();
+                                }
+                            });
+
+                            form.addEventListener('submit', function (e) {
+                                e.preventDefault();
+                                if (!input.files || input.files.length === 0) {
+                                    setStatus(';; 请先选择文件', 'err');
+                                    return;
+                                }
+                                btn.disabled = true;
+                                progress.style.display = 'block';
+                                fill.style.width = '0%';
+                                setStatus(';; 上传中…', 'info');
+
+                                var xhr = new XMLHttpRequest();
+                                xhr.open('POST', '/upload');
+                                xhr.upload.addEventListener('progress', function (ev) {
+                                    if (ev.lengthComputable) {
+                                        fill.style.width = Math.round(ev.loaded / ev.total * 100) + '%';
+                                    }
+                                });
+                                xhr.addEventListener('load', function () {
+                                    btn.disabled = false;
+                                    if (xhr.status >= 200 && xhr.status < 300) {
+                                        fill.style.width = '100%';
+                                        setStatus(';; 上传成功，正在刷新列表…', 'ok');
+                                        setTimeout(function () { location.reload(); }, 700);
+                                    } else {
+                                        setStatus(';; 上传失败：' + xhr.responseText, 'err');
+                                    }
+                                });
+                                xhr.addEventListener('error', function () {
+                                    btn.disabled = false;
+                                    setStatus(';; 上传失败：网络错误', 'err');
+                                });
+                                xhr.send(new FormData(form));
+                            });
+                        })();
+                    "#))
                 }
             }
         }
